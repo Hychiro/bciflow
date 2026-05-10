@@ -105,19 +105,31 @@ def chebyshevII(eegdata, low_cut=4, high_cut=40, btype='bandpass', order=4, rs='
         if rs <= 0:
             raise ValueError("rs must be greater than zero.")
         
-    Wn = [low_cut, high_cut]
+    if inplace:
+        output = eegdata
+    else:
+        output = eegdata.copy()
+        output['X'] = eegdata['X'].copy()    
+        
+    if btype in ['bandpass', 'bandstop']:
+        Wn = [low_cut, high_cut]
+    elif btype == 'lowpass':
+        Wn = high_cut
+    elif btype == 'highpass':
+        Wn = low_cut
 
-    X = eegdata['X'].copy()
+    X = output['X'].copy()
     X = X.reshape((np.prod(X.shape[:-1]), X.shape[-1]))
-
+    
+    b, a = cheby2(order, rs, Wn, btype=btype, fs=sfreq)
     X_ = []
     for signal_ in range(X.shape[0]):
-        filtered = filtfilt(*cheby2(order, rs, Wn, btype, fs=eegdata['sfreq']), X[signal_])
+
+        filtered = filtfilt(b, a, X[signal_])
         X_.append(filtered)
 
     X_ = np.array(X_)
-    X_ = X_.reshape(eegdata['X'].shape)
+    X_ = X_.reshape(output['X'].shape)
+    output['X'] = X_
 
-    eegdata['X'] = X_
-
-    return eegdata
+    return output
