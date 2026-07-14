@@ -134,6 +134,7 @@ def bandpass_conv(eegdata, low_cut=4, high_cut=40, transition=None, window_type=
         hhpf *= np.hamming(NL)
     elif window_type=='blackman':
         hhpf *= np.blackman(NL)
+    hhpf /= np.sum(hhpf)
     hhpf = -hhpf
     hhpf[(NL - 1) // 2] += 1
 
